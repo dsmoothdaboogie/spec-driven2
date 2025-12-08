@@ -144,6 +144,114 @@ export default config;
 ## 15) Definition of Done
 - Acceptance met; lint/test pass; a11y verified; no console errors; performance sane.
 
+### Testing, Analytics & `data-testid` Standards
+
+We use `data-testid` attributes as a **shared identifier** across:
+
+- Automated tests (unit, integration, e2e)
+- Product analytics (e.g., Google Analytics)
+- Session replay tools (e.g., Glassbox)
+
+These IDs must be **intentional, unique, and documented**.
+
+#### 1. Where `data-testid` is required
+
+Add a `data-testid` to any interactive element that:
+
+- Can be clicked / tapped / submitted / toggled, or
+- Represents a critical UX or business step we want to track.
+
+At minimum, this includes:
+
+- Native elements: `<button>`, `<a>`, `<input>`, `<select>`, `<textarea>`
+- Elements with interactive roles: `role="button"`, `role="link"`, `role="tab"`, etc.
+- Elements with handlers like `(click)`, `(keyup.enter)`, `onClick`, etc.
+- Key navigation and CTAs (e.g., primary actions, filters, form submits, tab switches).
+
+Non-interactive purely decorative elements generally **do not** need `data-testid`.
+
+#### 2. Naming convention
+
+`data-testid` values must be:
+
+- **Descriptive**
+- **kebab-case**
+- **Feature-scoped where possible**
+
+Recommended pattern:
+
+> `feature-context-element-action`
+
+Examples:
+
+- `requests-filter-apply-button`
+- `login-email-input`
+- `nav-profile-menu-toggle`
+- `settings-notifications-save-button`
+- `profile-avatar-upload-input`
+
+Avoid:
+
+- Vague IDs like `submit-button`, `cta1`, `button1`, `link`, `icon`, etc.
+- IDs that encode transient details (e.g., `blue-button`, `step3-button`).
+
+#### 3. Uniqueness & Registry
+
+- `data-testid` values must be **globally unique** across the frontend.
+- We maintain a central registry at:
+
+  `agent-os/docs/FRONTEND-TESTIDS.md`
+
+- For each `data-testid`, the registry must track:
+
+  - `data-testid` value  
+  - File path(s) where it appears  
+  - Element type (button, link, input, etc.)  
+  - Short description (what the interaction represents from a user/business perspective)
+
+This registry is the **source of truth** for:
+
+- Test authors (what to target)
+- Analytics & Glassbox instrumentation (what to track)
+- Any AI agent reasoning about interactions.
+
+#### 4. Workflow & Automation (`manage-testids`)
+
+We use the `manage-testids` Agent-OS command to keep this consistent:
+
+- In **review mode**:
+  - Scans a file/folder/repo
+  - Detects missing, duplicated, or weak `data-testid`s
+  - Proposes new IDs and updates to `FRONTEND-TESTIDS.md` (no code changes)
+
+- In **apply mode** (explicitly requested):
+  - Adds/renames `data-testid`s in code according to the agreed plan
+  - Writes/updates `agent-os/docs/FRONTEND-TESTIDS.md`
+
+**Expectations:**
+
+- New or modified interactive UI **must** either:
+  - Have compliant `data-testid`s added manually, **or**
+  - Be processed via `manage-testids` (review → apply).
+- `FRONTEND-TESTIDS.md` should be updated in the same PR that introduces or changes `data-testid`s.
+
+#### 5. Tests & Analytics Usage
+
+- **Tests (Jest/Cypress)**:
+  - Prefer `data-testid` selectors for stability rather than brittle CSS selectors.
+  - Example: `cy.get('[data-testid="login-submit-button"]')`
+
+- **Analytics & Glassbox**:
+  - Use `data-testid` as the primary selector for event tracking and replay tagging whenever possible.
+  - Do not rely on text labels or CSS classes for long-lived tracking.
+
+By following this standard, we get:
+
+- Stable, readable tests  
+- Reliable analytics & Glassbox signals  
+- A single, discoverable map of important UI interactions across the app
+
+
 ## Appendix A — Tailwind Example
 Button: `inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium`
 
